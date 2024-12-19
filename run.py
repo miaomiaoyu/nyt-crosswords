@@ -12,7 +12,7 @@ from datetime import datetime
 import argparse
 
 
-class NYTSundayCrosswords:
+class NYTCrosswords:
     # Seattle Times website
     URL = "https://nytsyn.pzzl.com/cwd_seattle/"
 
@@ -21,11 +21,8 @@ class NYTSundayCrosswords:
     poll_freq = 0.1
 
     def __init__(self, options, download_dir):
-        print("\n*** Initializing NYTSundayCrosswords ***\n")
-
         self.options = options
         self.download_dir = download_dir
-
         self.today = datetime.today().strftime("%y%m%d")
         self.today_fmt = datetime.today().strftime("%Y-%m-%d")
         self.today_dayweek = datetime.today().strftime("%A")
@@ -202,7 +199,7 @@ def main(download_dir):
         },
     )
 
-    xwords = NYTSundayCrosswords(options=options, download_dir=download_dir)
+    xwords = NYTCrosswords(options=options, save_dir=save_dir)
     xwords.download_puzzle()
     xwords.download_solution()
 
@@ -212,26 +209,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Set the download directory.")
 
     parser.add_argument(
-        "--download_dir",
+        "--save_dir",
         type=str,
-        default="0",
-        help='Specify the download directory (default: "0", creates a "NYT Crosswords" folder in iCloud)',
+        default="./downloads",
+        description="Directory to save downloaded files.",
     )
 
     # Parse arguments
     args = parser.parse_args()
 
     # Convert download_dir to an appropriate type
-    download_dir = args.download_dir
-
-    if download_dir == "icloud":
-        download_dir = os.path.join(get_icloud_path(), "NYT Crosswords")
-    elif download_dir == "0":
-        download_dir = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "downloads"
-        )  # Keep it as zero for the main function
-    else:
-        download_dir = download_dir  # Take it as a string path
+    save_dir = args.save_dir
 
     # Call the main function
-    main(download_dir)
+    main(save_dir)
