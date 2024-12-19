@@ -171,12 +171,12 @@ def get_icloud_path():
     return icloud_path
 
 
-def main(download_dir):
+def main(save_dir):
     # Specify the download directory
 
     # Create the downloads directory if it doesn't exist
-    if not os.path.exists(download_dir):
-        os.makedirs(download_dir)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
     # Set Options for WebDriver
     options = Options()
@@ -192,7 +192,7 @@ def main(download_dir):
     options.add_experimental_option(
         "prefs",
         {
-            "download.default_directory": download_dir,  # Set download directory
+            "download.default_directory": save_dir,  # Set download directory
             "download.prompt_for_download": False,  # Do not prompt for download
             "download.directory_upgrade": True,  # Allow overwriting files
             "safebrowsing.enabled": True,  # Enable safe browsing
@@ -212,7 +212,6 @@ if __name__ == "__main__":
         "--save_dir",
         type=str,
         default="./downloads",
-        description="Directory to save downloaded files.",
     )
 
     # Parse arguments
