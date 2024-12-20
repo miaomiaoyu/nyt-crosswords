@@ -236,8 +236,8 @@ def main(args):
         )
         NYTCrosswords.write_data_to_file(xwords.puzzle_data, puzzle_file_path)
 
-        puzzle_file_path = os.path.join(
-            args.save_dir, puzzle_file_name 
+        solution_file_path = os.path.join(
+            args.save_dir, solution_file_name
         )
         NYTCrosswords.write_data_to_file(xwords.solution_data, solution_file_path)
 
