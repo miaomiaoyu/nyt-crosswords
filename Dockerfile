@@ -28,4 +28,4 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 COPY run.py .
 
 # Define the command to run the application
-CMD ["python3", "run.py", "--driver_executable_path", "chromedriver-linux64/chromedriver"]
+CMD ["python3", "run.py"]

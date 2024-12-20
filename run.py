@@ -6,7 +6,9 @@ import platform
 import requests
 
 from datetime import datetime
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from googleapiclient.http import MediaInMemoryUpload
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -24,13 +26,13 @@ class NYTCrosswords:
     wait_time = 5
     poll_freq = 0.1
 
-    def __init__(self, options, driver_executable_path):
-        if driver_executable_path:
-            self.service = Service(executable_path=driver_executable_path)
+    def __init__(self, options):
+        if os.path.exists("./chromedriver-linux64"):
+            self.service = Service(executable_path="./chromedriver-linux64/chromedriver")
         else:
             self.service=Service(ChromeDriverManager().install())
         self.options = options
-        self.puzzled_data = None
+        self.puzzle_data = None
         self.solution_data = None
 
     def download_puzzle(self):
@@ -62,7 +64,7 @@ class NYTCrosswords:
             driver.switch_to.window(driver.window_handles[-1])
 
             current_url = driver.current_url
-            self.puzzled_data = self.fetch_data(current_url)
+            self.puzzle_data = self.fetch_data(current_url)
 
         else:
             print("No new window opened.")
@@ -173,22 +175,20 @@ def get_icloud_path():
 
     return icloud_path
 
-def upload_file(service, file_name):
-    file_metadata = {'name': file_name}
-    media = MediaFileUpload(file_path, resumable=True)
-    
-    try:
-        file = service.files().create(
-            body=file_metadata,
-            media_body=media,
-            fields='id'
-        ).execute()
-        print(f'Successfully uploaded {file_name}')
-        print(f'File ID: {file.get("id")}')
-        return file.get('id')
-    except Exception as e:
-        print(f'Error uploading file: {e}')
-        return None
+def upload_data(service, filename, folderId, data):
+    file_metadata = {
+        'name': filename,
+        'parents': [folderId]
+    }
+    media = MediaInMemoryUpload(
+            data,
+            mimetype='application/pdf',
+            resumable=True
+    )
+    file = service.files().create(body=file_metadata,
+                                media_body=media,
+                                fields='id').execute()
+    print(f'File ID: {file.get("id")}')
 
 def main(args):
 
@@ -206,14 +206,14 @@ def main(args):
     options.add_experimental_option(
         "prefs",
         {
-            "download.default_directory": args.save_dir,  # Set download directory
+            "download.default_directory": "/tmp",
             "download.prompt_for_download": False,  # Do not prompt for download
             "download.directory_upgrade": True,  # Allow overwriting files
             "safebrowsing.enabled": True,  # Enable safe browsing
         },
     )
 
-    xwords = NYTCrosswords(options=options, driver_executable_path=args.driver_executable_path)
+    xwords = NYTCrosswords(options=options)
     xwords.download_puzzle()
     xwords.download_solution()
 
@@ -222,38 +222,52 @@ def main(args):
     today_dayweek = datetime.today().strftime("%A")
     print(f"    Today is \033[1m{today_fmt}, {today_dayweek}\033[0m.\n")
 
+
+    puzzle_file_name = f"{today_fmt}_{today_dayweek}_Puzzle.pdf"
+    solution_file_name = f"{today_fmt}_{today_dayweek}_Solution.pdf"
+
     if args.save_dir:
         # Create the downloads directory if it doesn't exist
         if not os.path.exists(args.save_dir):
             os.makedirs(args.save_dir)
 
-        puzzle_file = os.path.join(
-            args.save_dir, f"{today_fmt}_{today_dayweek}_Puzzle.pdf"
+        puzzle_file_path = os.path.join(
+            args.save_dir, puzzle_file_name 
         )
-        NYTCrosswords.write_data_to_file(xwords.puzzled_data, puzzle_file)
+        NYTCrosswords.write_data_to_file(xwords.puzzle_data, puzzle_file_path)
 
-        solution_file = os.path.join(
-            args.save_dir, f"{today_fmt}_{today_dayweek}_Solution.pdf"
+        puzzle_file_path = os.path.join(
+            args.save_dir, puzzle_file_name 
         )
-        NYTCrosswords.write_data_to_file(xwords.solution_data, solution_file)
+        NYTCrosswords.write_data_to_file(xwords.solution_data, solution_file_path)
 
+        print("Files saved. Listing...")
+        files = os.listdir(args.save_dir)
+        for file in files:
+            print(file)
 
-    files = os.listdir(args.save_dir)
-    for file in files:
-        print(file)
+    if args.google_service_account_file:
+        SCOPES = ['https://www.googleapis.com/auth/drive']
+        puzzle_file_path = os.path.join(
+            "/tmp", puzzle_file_name
+        )
+        solution_file_path = os.path.join(
+            "/tmp", solution_file_name
+        )
+       
+        credentials = service_account.Credentials.from_service_account_file(
+        args.google_service_account_file, scopes=SCOPES)
+        service = build('drive', 'v3', credentials=credentials)
 
-
+        upload_data(service, puzzle_file_name, args.google_folder_id, xwords.puzzle_data)
+        upload_data(service, solution_file_name, args.google_folder_id, xwords.solution_data)
 
 if __name__ == "__main__":
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Set the download directory.")
-    parser.add_argument('--token', help='Google Drive API token')
-    parser.add_argument('--driver_executable_path', help='Google Drive API token')
-    parser.add_argument(
-        "--save_dir",
-        type=str,
-        default="./downloads",
-    )
+    parser.add_argument('--google_service_account_file', type=str)
+    parser.add_argument('--google_folder_id', type=str)
+    parser.add_argument('--save_dir', type=str)
 
     # Parse arguments
     args = parser.parse_args()
