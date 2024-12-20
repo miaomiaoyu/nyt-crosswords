@@ -1,5 +1,5 @@
 # Python Version 3.9
-FROM --platform=$TARGETPLATFORM python:3.9-slim
+FROM python:3.9-slim
 
 # Set the working directory
 WORKDIR /app
@@ -9,17 +9,8 @@ RUN apt-get update
 RUN apt-get install -y chromium wget unzip
 
 # Latest ChromeDriver https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json
-ARG TARGETARCH
-RUN if [ "$TARGETARCH" = "arm64" ]; then \
-        # For ARM64, use chromedriver built for ARM
-        wget -O chromedriver.zip https://chromedriver.storage.googleapis.com/131.0.6778.13/chromedriver_linux64.zip; \
-    else \
-        # For AMD64/x86_64
-        wget -O chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/131.0.6778.13/linux64/chromedriver-linux64.zip; \
-    fi && \
-
-    unzip chromedriver.zip && \
-    rm chromedriver.zip
+RUN wget https://storage.googleapis.com/chrome-for-testing-public/131.0.6778.13/linux64/chromedriver-linux64.zip
+RUN unzip chromedriver-linux64.zip
 
 # Setup venv
 RUN python -m venv /opt/venv
