@@ -191,11 +191,6 @@ def upload_file(service, file_name):
         return None
 
 def main(args):
-    # Specify the download directory
-    save_dir = args.save_dir
-    # Create the downloads directory if it doesn't exist
-    if save_dir and not os.path.exists(save_dir):
-        os.makedirs(save_dir)
 
     # Set Options for WebDriver
     options = Options()
@@ -211,7 +206,7 @@ def main(args):
     options.add_experimental_option(
         "prefs",
         {
-            "download.default_directory": save_dir,  # Set download directory
+            "download.default_directory": args.save_dir,  # Set download directory
             "download.prompt_for_download": False,  # Do not prompt for download
             "download.directory_upgrade": True,  # Allow overwriting files
             "safebrowsing.enabled": True,  # Enable safe browsing
@@ -221,20 +216,31 @@ def main(args):
     xwords = NYTCrosswords(options=options, driver_executable_path=args.driver_executable_path)
     xwords.download_puzzle()
     xwords.download_solution()
-    print(xwords.solution_data)
 
     today = datetime.today().strftime("%y%m%d")
     today_fmt = datetime.today().strftime("%Y-%m-%d")
     today_dayweek = datetime.today().strftime("%A")
     print(f"    Today is \033[1m{today_fmt}, {today_dayweek}\033[0m.\n")
 
-    puzzle_file = os.path.join(
-        "./", f"{today_fmt}_{today_dayweek}_Puzzle.pdf"
-    )
+    if args.save_dir:
+        # Create the downloads directory if it doesn't exist
+        if not os.path.exists(args.save_dir):
+            os.makedirs(args.save_dir)
 
-    solution_file = os.path.join(
-        "./", f"{today_fmt}_{today_dayweek}_Solution.pdf"
-    )
+        puzzle_file = os.path.join(
+            args.save_dir, f"{today_fmt}_{today_dayweek}_Puzzle.pdf"
+        )
+        NYTCrosswords.write_data_to_file(xwords.puzzled_data, puzzle_file)
+
+        solution_file = os.path.join(
+            args.save_dir, f"{today_fmt}_{today_dayweek}_Solution.pdf"
+        )
+        NYTCrosswords.write_data_to_file(xwords.solution_data, solution_file)
+
+
+    files = os.listdir(args.save_dir)
+    for file in files:
+        print(file)
 
 
 
