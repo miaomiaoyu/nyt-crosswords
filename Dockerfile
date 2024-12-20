@@ -10,12 +10,12 @@ RUN apt-get install -y chromium wget unzip
 
 # Latest ChromeDriver https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json
 ARG TARGETARCH
-RUN if [ "$TARGETARCH" = "mac-arm64" ]; then \
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
         # For ARM64, use chromedriver built for ARM
-        wget -O chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/133.0.6906.0/mac-arm64/chromedriver-mac-arm64.zip; \
+        wget -O chromedriver.zip https://chromedriver.storage.googleapis.com/131.0.6778.13/chromedriver_linux64.zip; \
     else \
         # For AMD64/x86_64
-        wget -O chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/133.0.6906.0/linux64/chromedriver-linux64.zip; \
+        wget -O chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/131.0.6778.13/linux64/chromedriver-linux64.zip; \
     fi && \
 
     unzip chromedriver.zip && \
