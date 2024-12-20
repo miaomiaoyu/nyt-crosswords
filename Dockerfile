@@ -4,6 +4,11 @@ FROM python:3.9-slim
 # Set the working directory
 WORKDIR /app
 
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+RUN pip install --upgrade pip
+
 # Copy requirement files first
 COPY requirements.txt .
 
