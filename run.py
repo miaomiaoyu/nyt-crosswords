@@ -28,7 +28,7 @@ class NYTCrosswords:
 
     def __init__(self, options):
         if os.path.exists("./chromedriver-linux64"):
-            self.service = Service(executable_path="./chromedriver-linux64/chromedriver")
+            self.service = Service(executable_path="/usr/local/bin/chromedriver")
         else:
             self.service=Service(ChromeDriverManager().install())
         self.options = options
@@ -198,10 +198,7 @@ def main(args):
     options.add_argument("--headless")  # Headless mode to avoid opening a window
     options.add_argument("--disable-gpu")  # Disable GPU acceleration
     options.add_argument("--no-sandbox")  # Required for some environments
-    options.add_argument("--start-maximized")
-    options.add_argument(
-        "--disable-dev-shm-usage"
-    )  # Overcome limited resource problems
+    options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
     options.add_argument("--no-sandbox")  # Bypass OS security model
     options.add_experimental_option(
         "prefs",
