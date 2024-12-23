@@ -1,15 +1,21 @@
+from typing import BinaryIO
+
+import argparse
 import os
-import requests
 import platform
+import requests
+
+from datetime import datetime
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaInMemoryUpload
 from selenium import webdriver
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
-from datetime import datetime
-import argparse
 
 
 class NYTCrosswords:
@@ -20,26 +26,19 @@ class NYTCrosswords:
     wait_time = 5
     poll_freq = 0.1
 
-    def __init__(self, options, download_dir):
+    def __init__(self, options):
+        if os.path.exists("./chromedriver-linux64"):
+            self.service = Service(executable_path="/usr/local/bin/chromedriver")
+        else:
+            self.service=Service(ChromeDriverManager().install())
         self.options = options
-        self.download_dir = download_dir
-        self.today = datetime.today().strftime("%y%m%d")
-        self.today_fmt = datetime.today().strftime("%Y-%m-%d")
-        self.today_dayweek = datetime.today().strftime("%A")
-        print(f"    Today is \033[1m{self.today_fmt}, {self.today_dayweek}\033[0m.\n")
-
-        self.puzzle_file = os.path.join(
-            self.download_dir, f"{self.today_fmt}_{self.today_dayweek}_Puzzle.pdf"
-        )
-
-        self.solution_file = os.path.join(
-            self.download_dir, f"{self.today_fmt}_{self.today_dayweek}_Solution.pdf"
-        )
+        self.puzzle_data = None
+        self.solution_data = None
 
     def download_puzzle(self):
         # Start a Browser Session
         driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install()), options=self.options
+            service=self.service, options=self.options
         )
 
         # Go to URL using driver
@@ -65,7 +64,7 @@ class NYTCrosswords:
             driver.switch_to.window(driver.window_handles[-1])
 
             current_url = driver.current_url
-            self.save_page_as_pdf(current_url, self.puzzle_file)
+            self.puzzle_data = self.fetch_data(current_url)
 
         else:
             print("No new window opened.")
@@ -75,7 +74,7 @@ class NYTCrosswords:
     def download_solution(self):
         # Start a Browser Session
         driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install()), options=self.options
+            service=self.service, options=self.options
         )
 
         # Go to URL using driver
@@ -121,7 +120,7 @@ class NYTCrosswords:
                 driver.switch_to.window(driver.window_handles[-1])
 
                 current_url = driver.current_url
-                self.save_page_as_pdf(current_url, self.solution_file)
+                self.solution_data = self.fetch_data(current_url)
 
             else:
                 print("No new window opened.")
@@ -132,16 +131,23 @@ class NYTCrosswords:
         driver.close()
 
     @staticmethod
-    def save_page_as_pdf(url: str, file: str):
+    def fetch_data(url: str):
         """
-        Saves the content of a web page as a PDF file.
+        Fetch the content from the given URL and returns the binary data
+        """
+        response = requests.get(url)
+        return response.content
+
+    @staticmethod
+    def write_data_to_file(data: BinaryIO, file: str):
+        """
+        Write data to file.
 
         This function fetches the content from the given URL and saves it to a specified file in binary
         format. It is intended for saving web pages or resources that can be accessed via an HTTP GET request.
 
         Args:
-            url (str): The URL of the web page to be saved as a PDF. This must be a valid URL pointing to
-                    an accessible resource.
+            data (binary):  The binary data to write.
             filename (str): The name of the file (with .pdf extension) in which to save the web page content.
                             The file will be created or overwritten in the specified download directory.
 
@@ -150,11 +156,10 @@ class NYTCrosswords:
                     the file writing process.
 
         Example:
-            save_page_as_pdf('https://example.com', 'example_page')
+            write_data_to_file('https://example.com', 'example_page')
         """
-        response = requests.get(url)
         with open(file, "wb") as f:
-            f.write(response.content)
+            f.write(data)
 
 
 def get_icloud_path():
@@ -170,13 +175,22 @@ def get_icloud_path():
 
     return icloud_path
 
+def upload_data(service, filename, folderId, data):
+    file_metadata = {
+        'name': filename,
+        'parents': [folderId]
+    }
+    media = MediaInMemoryUpload(
+            data,
+            mimetype='application/pdf',
+            resumable=True
+    )
+    file = service.files().create(body=file_metadata,
+                                media_body=media,
+                                fields='id').execute()
+    print(f'File ID: {file.get("id")}')
 
-def main(save_dir):
-    # Specify the download directory
-
-    # Create the downloads directory if it doesn't exist
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+def main(args):
 
     # Set Options for WebDriver
     options = Options()
@@ -184,41 +198,77 @@ def main(save_dir):
     options.add_argument("--headless")  # Headless mode to avoid opening a window
     options.add_argument("--disable-gpu")  # Disable GPU acceleration
     options.add_argument("--no-sandbox")  # Required for some environments
-    options.add_argument("--start-maximized")
-    options.add_argument(
-        "--disable-dev-shm-usage"
-    )  # Overcome limited resource problems
+    options.add_argument("--start-maximized") # Needed to see whole page
+    options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
     options.add_argument("--no-sandbox")  # Bypass OS security model
     options.add_experimental_option(
         "prefs",
         {
-            "download.default_directory": save_dir,  # Set download directory
+            "download.default_directory": "/tmp",
             "download.prompt_for_download": False,  # Do not prompt for download
             "download.directory_upgrade": True,  # Allow overwriting files
             "safebrowsing.enabled": True,  # Enable safe browsing
         },
     )
 
-    xwords = NYTCrosswords(options=options, save_dir=save_dir)
+    xwords = NYTCrosswords(options=options)
     xwords.download_puzzle()
     xwords.download_solution()
 
+    today = datetime.today().strftime("%y%m%d")
+    today_fmt = datetime.today().strftime("%Y-%m-%d")
+    today_dayweek = datetime.today().strftime("%A")
+    print(f"    Today is \033[1m{today_fmt}, {today_dayweek}\033[0m.\n")
+
+
+    puzzle_file_name = f"{today_fmt}_{today_dayweek}_Puzzle.pdf"
+    solution_file_name = f"{today_fmt}_{today_dayweek}_Solution.pdf"
+
+    if args.save_dir:
+        # Create the downloads directory if it doesn't exist
+        if not os.path.exists(args.save_dir):
+            os.makedirs(args.save_dir)
+
+        puzzle_file_path = os.path.join(
+            args.save_dir, puzzle_file_name 
+        )
+        NYTCrosswords.write_data_to_file(xwords.puzzle_data, puzzle_file_path)
+
+        solution_file_path = os.path.join(
+            args.save_dir, solution_file_name
+        )
+        NYTCrosswords.write_data_to_file(xwords.solution_data, solution_file_path)
+
+        print("Files saved. Listing...")
+        files = os.listdir(args.save_dir)
+        for file in files:
+            print(file)
+
+    if args.google_service_account_file:
+        SCOPES = ['https://www.googleapis.com/auth/drive']
+        puzzle_file_path = os.path.join(
+            "/tmp", puzzle_file_name
+        )
+        solution_file_path = os.path.join(
+            "/tmp", solution_file_name
+        )
+       
+        credentials = service_account.Credentials.from_service_account_file(
+        args.google_service_account_file, scopes=SCOPES)
+        service = build('drive', 'v3', credentials=credentials)
+
+        upload_data(service, puzzle_file_name, args.google_folder_id, xwords.puzzle_data)
+        upload_data(service, solution_file_name, args.google_folder_id, xwords.solution_data)
 
 if __name__ == "__main__":
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Set the download directory.")
-
-    parser.add_argument(
-        "--save_dir",
-        type=str,
-        default="./downloads",
-    )
+    parser.add_argument('--google_service_account_file', type=str)
+    parser.add_argument('--google_folder_id', type=str)
+    parser.add_argument('--save_dir', type=str)
 
     # Parse arguments
     args = parser.parse_args()
 
-    # Convert download_dir to an appropriate type
-    save_dir = args.save_dir
-
     # Call the main function
-    main(save_dir)
+    main(args)
