@@ -176,6 +176,18 @@ def get_icloud_path():
     return icloud_path
 
 def upload_data(service, filename, folderId, data):
+    query = f"name='{filename}' and '{folderId}' in parents and trashed=false"
+    results = service.files().list(
+        q=query,
+        spaces='drive',
+        fields='files(id, name)'
+    ).execute()
+    existing_files = results.get('files', [])
+
+    if existing_files:
+        print(f'File exists, exiting...')
+        return
+
     file_metadata = {
         'name': filename,
         'parents': [folderId]
