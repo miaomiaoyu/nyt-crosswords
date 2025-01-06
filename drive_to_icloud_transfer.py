@@ -24,7 +24,7 @@ def authenticate_google_drive():
 # Download file from Google Drive
 def download_file(service, file_id, file_name):
     request = service.files().get_media(fileId=file_id)
-    file_path = os.path.join(ICLOUD_DRIVE_PATH, file_name)
+    file_path = os.path.join(ICLOUD_DRIVE_PATH, "Blank", file_name)
     with io.FileIO(file_path, "wb") as file:
         downloader = MediaIoBaseDownload(file, request)
         done = False
@@ -56,15 +56,15 @@ def get_google_drive_folder_id_by_name(service, folder_name):
 
 def transfer_sunday_puzzles(files):
     for file in files:
-        if "day" in file:
+        if "Sunday" in file:
             [date, day, content] = file.split("_")
-            markup_file = "_".join([date, content])
-            if not os.path.exists(
-                os.path.join(ICLOUD_DRIVE_PATH, os.pardir, markup_file)
-            ):
-                src = os.path.join(ICLOUD_DRIVE_PATH, file)
-                dst = os.path.join(ICLOUD_DRIVE_PATH, os.pardir, markup_file)
+            new_file = "_".join([date, content])
+            if not os.path.exists(os.path.join(ICLOUD_DRIVE_PATH, "Sunday", new_file)):
+                src = os.path.join(ICLOUD_DRIVE_PATH, "Blank", file)
+                dst = os.path.join(ICLOUD_DRIVE_PATH, "Sunday", new_file)
                 shutil.copy(src, dst)
+            else:
+                print(f"{new_file} already exists in 'Sunday' drive.")
 
 
 # Main function
@@ -72,8 +72,6 @@ def main():
     service = authenticate_google_drive()
     if GOOGLE_DRIVE_FOLDER_ID:
         files = list_files_in_folder(service, GOOGLE_DRIVE_FOLDER_ID)
-        for file in files:
-            print(file["name"], file["id"])
     files = list_files_in_folder(service, GOOGLE_DRIVE_FOLDER_ID)
 
     if not files:
@@ -81,10 +79,12 @@ def main():
         return
 
     for file in files:
-        print(f"Downloading {file['name']}...")
-        download_file(service, file["id"], file["name"])
+        if not os.path.exists(os.path.join(ICLOUD_DRIVE_PATH, "Blank", file["name"])):
+            download_file(service, file["id"], file["name"])
+        else:
+            print(f"{file['name']} already exists in 'Blank' drive.")
 
-    files = os.listdir(ICLOUD_DRIVE_PATH)
+    files = os.listdir(os.path.join(ICLOUD_DRIVE_PATH, "Blank"))
     transfer_sunday_puzzles(files)
 
 
