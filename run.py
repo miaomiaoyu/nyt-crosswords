@@ -192,7 +192,7 @@ def upload_data(service, filename, folderId, data):
         .create(body=file_metadata, media_body=media, fields="id")
         .execute()
     )
-    print(f'File ID: {file.get("id")}')
+    print(f"File ID: {file.get('id')}")
 
 
 def main(args):
@@ -221,13 +221,10 @@ def main(args):
     xwords.download_puzzle()
     xwords.download_solution()
 
-    today = datetime.today().strftime("%y%m%d")
-    today_fmt = datetime.today().strftime("%Y-%m-%d")
-    today_dayweek = datetime.today().strftime("%A")
-    print(f"    Today is \033[1m{today_fmt}, {today_dayweek}\033[0m.\n")
-
-    puzzle_file_name = f"{today_fmt}_{today_dayweek}_Puzzle.pdf"
-    solution_file_name = f"{today_fmt}_{today_dayweek}_Solution.pdf"
+    today_fmt = datetime.today().strftime("%%m-%d-%y")
+    dw = datetime.today().strftime("%a").upper()
+    puzzle_file_name = f"{today_fmt}-{dw} Puzzle.pdf"
+    solution_file_name = f"{today_fmt}-{dw} Solution.pdf"
 
     if args.save_dir:
         # Create the downloads directory if it doesn't exist
