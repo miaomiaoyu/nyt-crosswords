@@ -102,7 +102,6 @@ if __name__ == "__main__":
     # Check if there are any differences in the two files of the two folders
     icloud_files = list_all_files_recursive(download_path)
 
-
     # 1. Detect new files in the drive folder and rename them.
     files_in_drive = list_files_in_drive_folder(service, GOOGLE_FOLDER_ID)
 
@@ -118,8 +117,6 @@ if __name__ == "__main__":
 
     # 2. Find new SUNDAY crosswords.
     files_in_drive = list_files_in_drive_folder(service, GOOGLE_FOLDER_ID)
-
-    unsynced_file_ids = []
 
     for drive_file in files_in_drive:
         drive_filename = drive_file['name']
