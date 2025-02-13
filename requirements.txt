@@ -1,5 +1,6 @@
-google-auth-oauthlib==1.2.1
-google-api-python-client==2.156.0
-selenium==4.27.0
-requests==2.31.0
-webdriver-manager==4.0.2
+google_api_python_client==2.133.0
+protobuf==5.29.3
+python-dotenv==1.0.1
+Requests==2.32.3
+selenium==4.28.1
+webdriver_manager==4.0.2
