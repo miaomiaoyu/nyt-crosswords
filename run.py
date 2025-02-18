@@ -210,7 +210,7 @@ def main(args):
     options.add_experimental_option(
         "prefs",
         {
-            "download.default_directory": "/tmp",
+            "download.default_directory": "/downloads",
             "download.prompt_for_download": False,  # Do not prompt for download
             "download.directory_upgrade": True,  # Allow overwriting files
             "safebrowsing.enabled": True,  # Enable safe browsing
@@ -263,9 +263,9 @@ def main(args):
 if __name__ == "__main__":
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Set the download directory.")
+    parser.add_argument("--download_dir", type=str, default="./download")
     parser.add_argument("--google_service_account_file", type=str)
     parser.add_argument("--google_folder_id", type=str)
-    parser.add_argument("--save_dir", type=str)
 
     # Parse arguments
     args = parser.parse_args()

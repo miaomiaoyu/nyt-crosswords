@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import io
 import re
@@ -56,7 +58,7 @@ def rename_file_in_drive(service: Any, file_id: str, new_name: str) -> Optional[
             body={"name": new_name},
             fields="id, name"
         ).execute()
-        logging.info(f"Renamed file ID: {updated_file['id']} to '{updated_file['name']}'")
+        logging.info(f"Renamed [ID: {updated_file['id']}] >> '{updated_file['name']}'")
         return updated_file
     except HttpError as e:
         logging.error(f"Failed to rename file: {e}")
@@ -115,18 +117,18 @@ def detect_filename_format(filename: str) -> str:
     return "Unknown"
 
 
-def download_file(service: Any, file_id: str, destination: str) -> None:
+def download_file(service: Any, file_id: str, dst: str) -> None:
     """Downloads a file from Google Drive to a local directory."""
     try:
         request = service.files().get_media(fileId=file_id)
-        with io.FileIO(destination, "wb") as file:
+        with io.FileIO(dst, "wb") as file:
             downloader = MediaIoBaseDownload(file, request)
             done = False
             while not done:
                 status, done = downloader.next_chunk()
-                logging.info(f"Downloading {destination}: {int(status.progress() * 100)}%")
+                logging.info(f"Downloading {os.path.basename(dst)}: {int(status.progress() * 100)}%")
     except HttpError as e:
-        logging.error(f"Failed to download file {destination}: {e}")
+        logging.error(f"Failed to download file {os.path.basename(dst)}: {e}")
 
 
 def process_drive_files(service: Any, icloud_files: List[str]) -> None:
@@ -155,6 +157,7 @@ def process_drive_files(service: Any, icloud_files: List[str]) -> None:
 
 
 if __name__ == "__main__":
+    print("nyt-crosswords | Syncing Files in Drive to iCloud")
     try:
         service = authenticate_google_drive()
         icloud_files = list_all_files_recursive(os.path.join(ICLOUD_PATH, "nyt-crosswords"))

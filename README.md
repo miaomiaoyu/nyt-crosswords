@@ -27,21 +27,21 @@ Before running the script, ensure you have the following installed:
 2. Install required packages:
 
    ```bash
-   pip install selenium webdriver-manager requests
+   pip install -r requirements.txt
    ```
 
 ## Usage
 
-To run the script, execute the following command in your terminal, replacing `path/to/download/directory` with your desired directory:
+To run the script, execute the following command in your terminal, replacing `path/to/download/directory` with your desired directory (defaults to './downloads' if not specified.):
 
 ```bash
-python3 run.py --save_dir path/to/download/directory
+python3 run.py --download_dir `path/to/download/directory`
 ```
 
-### Example
+### To set script up to run automatically
 
 ```bash
-python3 run.py --save_dir ./downloads
+chmod +x run.py
 ```
 
 ## How It Works
