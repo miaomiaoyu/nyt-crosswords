@@ -157,10 +157,11 @@ def process_drive_files(service: Any, icloud_files: List[str]) -> None:
 
 
 if __name__ == "__main__":
-    print("nyt-crosswords | Syncing Files in Drive to iCloud")
+    print("\nnyt-crosswords | Syncing Files in Drive to iCloud\n")
     try:
         service = authenticate_google_drive()
         icloud_files = list_all_files_recursive(os.path.join(ICLOUD_PATH, "nyt-crosswords"))
         process_drive_files(service, icloud_files)
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
+
