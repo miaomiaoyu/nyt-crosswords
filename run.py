@@ -221,7 +221,7 @@ def main(args):
     xwords.download_puzzle()
     xwords.download_solution()
 
-    today_fmt = datetime.today().strftime("%%m-%d-%y")
+    today_fmt = datetime.today().strftime("%m-%d-%y")
     dw = datetime.today().strftime("%a").upper()
     puzzle_file_name = f"{today_fmt}-{dw} Puzzle.pdf"
     solution_file_name = f"{today_fmt}-{dw} Solution.pdf"
