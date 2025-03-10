@@ -1,6 +1,8 @@
 # NYT Crosswords
 
-This script automates the downloading of the New York Times Crosswords puzzles and their solutions from the Seattle Times website. It uses Selenium WebDriver to interact with the web page and store the downloaded puzzles in PDF format.
+This script automates the downloading of the New York Times Crosswords puzzles and their solutions from the Seattle Times website*. It uses Selenium WebDriver to interact with the web page and store the downloaded puzzles in PDF format.
+
+*The crosswords on Seattle Times are 5 weeks behind current date.
 
 ## Features
 
