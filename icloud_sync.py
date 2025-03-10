@@ -16,9 +16,9 @@ from google.oauth2.service_account import Credentials
 load_dotenv()
 
 # Constants
-ICLOUD_PATH = os.getenv("ICLOUD_PATH")
+ICLOUD_PATH = os.path.expanduser(os.getenv("ICLOUD_PATH"))
+GOOGLE_SERVICE_ACCOUNT_FILE = os.path.expanduser(os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE"))
 GOOGLE_FOLDER_ID = os.getenv("GOOGLE_FOLDER_ID")
-GOOGLE_SERVICE_ACCOUNT_FILE = os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE")
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 # Configure logging
