@@ -1,44 +1,74 @@
-# Ignore node_modules directory
-node_modules/
-data/
-*.h5
-
-# Ignore IDE-specific files
+# IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# Ignore environment files
+# Environment
 .env
+.env.local
+.env.*.local
 .config/
+venv/
+env/
+.venv/
+*.env
 
-# Ignore Git-related files
-.git/
-.gitattributes
-
-# Ignore Jupyter Notebook checkpoints
-*.ipynb_checkpoints/
-*.ipynb
-
-# Ignore compiled Python files
+# Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
 *.pyd
+*.pyo
+*.so
+.Python
+pip-selfcheck.json
+*.egg-info/
+*.egg
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
 
-# Ignore macOS system files
-*/.DS_Store
+# Jupyter
+*.ipynb
+*.ipynb_checkpoints/
+.ipython/
+
+# System
 .DS_Store
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Ignore logs and temporary files
+# Logs
 logs/
 *.log
 *.out
 *.err
 
-# Ignore cache files
-*.cache
+# Cache
 .cache/
-.ipython/
+*.cache
 
-# Ignore 
-.config/
+# Downloads
+download/
+tests/
+
+# Git
+.git/
+.gitattributes
+.gitignore
+.gitmodules
+
+# Local config
+config/
+local_settings.py
+settings_local.py
+
+# Temporary files
+*.tmp
+*.bak
+*~

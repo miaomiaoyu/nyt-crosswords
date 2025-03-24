@@ -35,7 +35,7 @@ COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code
-COPY run.py .
+COPY crosswords_download.py .
 
 # Define the command to run the application
-CMD ["python3", "run.py"]
+CMD ["python3", "crosswords_download.py"]
