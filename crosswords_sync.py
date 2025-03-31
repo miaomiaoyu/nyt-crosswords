@@ -29,7 +29,7 @@ class CrosswordSyncer:
         r"^\d{2}-\d{2}-\d{2}-[A-Z]{3}\sSolution\.pdf$",
     )
 
-    def __init__(self, dry_run: bool = False):
+    def __init__(self, day_of_week: int = 6, dry_run: bool = False):
         """Initialize the CrosswordSyncer.
 
         Args:
@@ -48,6 +48,7 @@ class CrosswordSyncer:
         )
         self.folder_id = os.getenv("GOOGLE_FOLDER_ID", "")
         self.scopes = ["https://www.googleapis.com/auth/drive"]
+        self.day_of_week = day_of_week
         self.dry_run = dry_run
 
         # Validate config
@@ -243,6 +244,17 @@ class CrosswordSyncer:
 
         return False
 
+    def day_of_week_string_to_index(self, day_of_week):
+        return {
+            0: "MON",
+            1: "TUE",
+            2: "WED",
+            3: "THU",
+            4: "FRI",
+            5: "SAT",
+            6: "SUN",
+        }.get(day_of_week)
+
     def download_file(self, service: Any, file_id: str, filename: str) -> bool:
         """Download a file from Google Drive to the local directory.
 
@@ -318,20 +330,29 @@ class CrosswordSyncer:
             drive_file_id = drive_file["id"]
             drive_filename = drive_file["name"]
 
-            # Check if this is a Sunday crossword
-            if "-SUN" in drive_filename:
-                local_filename = drive_filename.replace("-SUN", "")
+            if not drive_filename.startswith(
+                "%m"
+            ):  # >> Ignore files that start with %
+                day_of_week = self.day_of_week_string_to_index(self.day_of_week)
 
-                if local_filename not in local_files:
-                    self.logger.info(
-                        f"Downloading new Sunday crossword: {local_filename}"
+                # Check if this is a Sunday crossword
+                if f"-{day_of_week}" in drive_filename:
+                    local_filename = drive_filename.replace(
+                        f"-{day_of_week}", ""
                     )
-                    self.download_file(service, drive_file_id, local_filename)
-                else:
-                    self.logger.debug(
-                        f"Skipping existing file: {local_filename}"
-                    )
-                    self.stats["skipped"] += 1
+
+                    if local_filename not in local_files:
+                        self.logger.info(
+                            f"Downloading new Sunday crossword: {local_filename}"
+                        )
+                        self.download_file(
+                            service, drive_file_id, local_filename
+                        )
+                    else:
+                        self.logger.debug(
+                            f"Skipping existing file: {local_filename}"
+                        )
+                        self.stats["skipped"] += 1
 
     def sync(self) -> Dict[str, int]:
         """Perform the synchronization process.
@@ -372,6 +393,13 @@ def main():
         description="Sync NYT crosswords from Google Drive to iCloud"
     )
     parser.add_argument(
+        "--day_of_week",
+        "-d",
+        default=6,
+        action="store_true",
+        help="Sync crosswords from this day of the Week. Defaults to Sunday (6).",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Simulate operations without making changes",
@@ -379,13 +407,14 @@ def main():
     parser.add_argument(
         "--verbose", "-v", action="store_true", help="Enable verbose logging"
     )
+
     args = parser.parse_args()
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
     print("\nNYT Crosswords | Syncing Files from Google Drive to iCloud\n")
-    syncer = CrosswordSyncer(dry_run=args.dry_run)
+    syncer = CrosswordSyncer(day_of_week=args.day_of_week, dry_run=args.dry_run)
     syncer.sync()
 
 
